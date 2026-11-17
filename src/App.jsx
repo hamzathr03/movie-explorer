@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
+import {
+  AnimatePresence,
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 
 const TOKEN = import.meta.env.VITE_TMDB_TOKEN;
 const API = "https://api.themoviedb.org/3";
@@ -395,37 +403,78 @@ function App() {
         </a>
         <nav className="nav-pill" aria-label="Main navigation">
           <button type="button" className={`nav-pill-link ${view === "home" ? "is-active" : ""}`} onClick={() => goTo("home")}>
-            Home
+            {view === "home" && (
+              <motion.span layoutId="nav-indicator" className="nav-indicator" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+            )}
+            <span className="nav-label">Home</span>
           </button>
           <button type="button" className={`nav-pill-link ${view === "movies" ? "is-active" : ""}`} onClick={() => goTo("movies")}>
-            Movies
+            {view === "movies" && (
+              <motion.span layoutId="nav-indicator" className="nav-indicator" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+            )}
+            <span className="nav-label">Movies</span>
           </button>
           <button type="button" className={`nav-pill-link ${view === "tv" ? "is-active" : ""}`} onClick={() => goTo("tv")}>
-            Series
+            {view === "tv" && (
+              <motion.span layoutId="nav-indicator" className="nav-indicator" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+            )}
+            <span className="nav-label">Series</span>
           </button>
           <button type="button" className={`nav-pill-link ${view === "favorites" ? "is-active" : ""}`} onClick={() => goTo("favorites")}>
-            Favorites <span className="nav-count">{favorites.length}</span>
+            {view === "favorites" && (
+              <motion.span layoutId="nav-indicator" className="nav-indicator" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+            )}
+            <span className="nav-label">Favorites <span className="nav-count">{favorites.length}</span></span>
           </button>
         </nav>
       </header>
 
       {view === "home" && (
         <>
-          <section
-            className="hero hero-slider"
-            style={
-              hero?.backdrop_path
-                ? { backgroundImage: `linear-gradient(rgba(10,10,14,0.55), rgba(16,16,20,0.96)), url(${IMG}/original${hero.backdrop_path})` }
-                : undefined
-            }
-          >
+          <section className="hero hero-slider">
+            <AnimatePresence>
+              {hero?.backdrop_path && (
+                <motion.div
+                  key={hero.backdrop_path}
+                  className="hero-bg"
+                  style={{
+                    backgroundImage: `linear-gradient(rgba(10,10,14,0.55), rgba(16,16,20,0.96)), url(${IMG}/original${hero.backdrop_path})`,
+                  }}
+                  initial={{ opacity: 0, scale: 1.06 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                />
+              )}
+            </AnimatePresence>
+            <motion.div
+              className="aurora aurora-a"
+              animate={{ x: [0, 70, -20, 0], y: [0, -36, 18, 0], scale: [1, 1.25, 1] }}
+              transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              className="aurora aurora-b"
+              animate={{ x: [0, -60, 24, 0], y: [0, 28, -14, 0], scale: [1.1, 0.95, 1.1] }}
+              transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="hero-content">
             <p className="eyebrow">Your next movie night starts here</p>
-            <h1>
+            <h1 key={hero ? favKey(hero) : "default-title"}>
               {hero ? (
-                <>
-                  {itemTitle(hero).split(" ").slice(0, -1).join(" ")}{" "}
-                  <span className="hero-accent">{itemTitle(hero).split(" ").slice(-1)}</span>
-                </>
+                itemTitle(hero)
+                  .split(" ")
+                  .map((word, index, words) => (
+                    <motion.span
+                      key={index}
+                      className={index === words.length - 1 ? "hero-accent hero-word" : "hero-word"}
+                      initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      transition={{ delay: 0.09 * index, duration: 0.45 }}
+                    >
+                      {word}
+                      {index < words.length - 1 ? " " : ""}
+                    </motion.span>
+                  ))
               ) : (
                 <>
                   Every movie has <span className="hero-accent">a universe.</span>
@@ -473,13 +522,31 @@ function App() {
                 ))}
               </div>
             )}
+            </div>
           </section>
+
+          {rows[0]?.items?.length > 0 && (
+            <div className="marquee-3d" aria-hidden="true">
+              <div className="marquee-track">
+                {[...rows[0].items, ...rows[0].items].map((item, index) =>
+                  item.poster_path ? (
+                    <img
+                      key={index}
+                      src={`${IMG}/w342${item.poster_path}`}
+                      alt=""
+                      loading="lazy"
+                    />
+                  ) : null
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="home-rows">
             {homeLoading && <p className="status-text">Loading...</p>}
             {error && <p className="error-message">{error}</p>}
             {rows.map((row) => (
-              <section className="row-section" key={row.id}>
+              <motion.section className="row-section" key={row.id} initial={{ opacity: 0, y: 36 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.55, ease: "easeOut" }}>
                 <h2>{row.title}</h2>
                 <div className="row-scroll">
                   {row.items.slice(0, 14).map((item) => (
@@ -494,7 +561,7 @@ function App() {
                     />
                   ))}
                 </div>
-              </section>
+              </motion.section>
             ))}
           </div>
         </>
@@ -597,8 +664,8 @@ function App() {
       )}
 
       {(detailsLoading || detailsError || selected) && (
-        <div className="modal-backdrop" onClick={closeDetails}>
-          <div className="movie-modal" onClick={(event) => event.stopPropagation()}>
+        <motion.div className="modal-backdrop" onClick={closeDetails} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+          <motion.div className="movie-modal" onClick={(event) => event.stopPropagation()} initial={{ opacity: 0, scale: 0.92, y: 28 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 24 }}>
             <button type="button" className="modal-close" onClick={closeDetails} aria-label="Close details">
               ×
             </button>
@@ -723,13 +790,13 @@ function App() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
 
       {(personLoading || person) && (
-        <div className="modal-backdrop person-backdrop" onClick={closePerson}>
-          <div className="trailer-modal person-modal" onClick={(event) => event.stopPropagation()}>
+        <motion.div className="modal-backdrop person-backdrop" onClick={closePerson} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+          <motion.div className="trailer-modal person-modal" onClick={(event) => event.stopPropagation()} initial={{ opacity: 0, scale: 0.92, y: 28 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 24 }}>
             <button type="button" className="modal-close" onClick={closePerson} aria-label="Close actor">
               ×
             </button>
@@ -795,13 +862,13 @@ function App() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
 
       {(trailerLoading || trailerError || trailerKey) && (
-        <div className="modal-backdrop trailer-backdrop" onClick={closeTrailer}>
-          <div className="trailer-modal" onClick={(event) => event.stopPropagation()}>
+        <motion.div className="modal-backdrop trailer-backdrop" onClick={closeTrailer} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+          <motion.div className="trailer-modal" onClick={(event) => event.stopPropagation()} initial={{ opacity: 0, scale: 0.92, y: 28 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 24 }}>
             <button type="button" className="modal-close" onClick={closeTrailer} aria-label="Close trailer">
               ×
             </button>
@@ -818,8 +885,8 @@ function App() {
                 />
               </div>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </main>
   );
@@ -867,8 +934,37 @@ function WatchProviders({ details }) {
 }
 
 function Card({ item, genresText, isFavorite, onToggleFavorite, onDetails, onTrailer }) {
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(mouseY, [0, 1], [7, -7]), { stiffness: 160, damping: 18 });
+  const rotateY = useSpring(useTransform(mouseX, [0, 1], [-7, 7]), { stiffness: 160, damping: 18 });
+  const glareX = useTransform(mouseX, (value) => value * 100);
+  const glareY = useTransform(mouseY, (value) => value * 100);
+  const glare = useMotionTemplate`radial-gradient(340px circle at ${glareX}% ${glareY}%, rgba(244, 63, 94, 0.22), transparent 65%)`;
+
+  function handleMouseMove(event) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    mouseX.set((event.clientX - rect.left) / rect.width);
+    mouseY.set((event.clientY - rect.top) / rect.height);
+  }
+
+  function handleMouseLeave() {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  }
+
   return (
-    <article className="movie-card">
+    <motion.article
+      className="movie-card"
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      initial={{ opacity: 0, y: 26 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-30px" }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <motion.div className="card-glare" style={{ background: glare }} />
       {item.poster_path ? (
         <img src={`${IMG}/w500${item.poster_path}`} alt={`${itemTitle(item)} poster`} loading="lazy" />
       ) : (
@@ -895,7 +991,7 @@ function Card({ item, genresText, isFavorite, onToggleFavorite, onDetails, onTra
           {isFavorite ? "♥ Remove favorite" : "♡ Add to favorites"}
         </button>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
