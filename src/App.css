@@ -385,3 +385,237 @@ button {
     width: min(190px, 70%);
   }
 }
+.cast-section {
+  margin-top: 20px;
+}
+
+.cast-section h3 {
+  margin: 0 0 12px;
+  color: var(--text);
+}
+
+.cast-list {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+}
+
+.cast-member {
+  flex: 0 0 76px;
+  text-align: center;
+}
+
+.cast-photo {
+  display: block;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 7px;
+  border: 2px solid #44444e;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cast-placeholder {
+  display: grid;
+  place-items: center;
+  background: #30212a;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.cast-name {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #c4c4cc;
+  font-size: 12px;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+
+/* Avengers cinematic redesign — original layout and features preserved */
+:root { --bg: #090b11; --surface: #171b25; --surface-hover: #242b39; --accent: #e83d4b; }
+body { background: var(--bg); }
+.app { position: relative; isolation: isolate; background: #090b11; }
+/* Artwork comes from the official TMDB movie backdrop; opacity stays at 50%. */
+.app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: var(--avengers-image, none);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: .5;
+  pointer-events: none;
+}
+.app::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(7,9,16,.55) 0%, rgba(8,10,17,.77) 55%, rgba(8,10,17,.94) 100%);
+  pointer-events: none;
+}
+.navbar { position: relative; z-index: 2; border-bottom: 1px solid rgba(255,255,255,.08); }
+.logo { letter-spacing: -.9px; }
+.favorites-button { background: rgba(18,22,31,.72); border-color: rgba(255,255,255,.18); backdrop-filter: blur(12px); }
+.hero {
+  min-height: 500px;
+  padding: 102px 20px 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, rgba(8,11,18,.24), rgba(8,11,18,.65) 78%);
+}
+.eyebrow { color: #ff9ba5; font-size: 12px; letter-spacing: 2.8px; }
+.hero h1 { max-width: 900px; text-shadow: 0 5px 36px rgba(0,0,0,.55); }
+.hero-accent { color: #fb5562; }
+.description { color: #e0e2e8; text-shadow: 0 2px 14px #000; }
+.search-row { width: min(650px, 100%); padding: 6px; gap: 6px; border: 1px solid rgba(255,255,255,.18); border-radius: 15px; background: rgba(13,17,26,.75); box-shadow: 0 12px 50px rgba(0,0,0,.28); backdrop-filter: blur(16px); }
+.search-row input { border: 0; background: transparent; }
+.search-row input:focus { border-color: transparent; }
+.search-row button { border-radius: 10px; }
+.movies-section { position: relative; padding-top: 32px; }
+.section-heading h2 { text-shadow: 0 2px 18px rgba(0,0,0,.75); }
+.section-heading select { background: rgba(20,24,33,.92); border-color: rgba(255,255,255,.2); }
+.movie-card { background: rgba(20,24,33,.88); border-color: rgba(255,255,255,.12); backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,.25); transition: transform .25s, border-color .25s, box-shadow .25s; }
+.movie-card:hover { transform: translateY(-7px); border-color: rgba(251,85,98,.68); box-shadow: 0 20px 42px rgba(0,0,0,.43); }
+.movie-card > img { transition: transform .4s ease; }
+.movie-card:hover > img { transform: scale(1.045); }
+.movie-info button { background: #242936; }
+.movie-modal { background: #171b25; }
+@media (max-width: 600px) {
+  .app::before { background-position: 55% top; }
+  .hero { min-height: 410px; padding: 75px 16px 80px; }
+  .hero h1 { font-size: clamp(36px, 9vw, 48px); letter-spacing: -1.7px; }
+  .search-row { width: 100%; }
+  .search-row button { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .movie-card, .movie-card > img { transition: none; }
+}
+
+
+/* Reference-inspired floating navigation pill */
+.navbar {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  height: auto;
+  min-height: 98px;
+  padding: 22px 18px 14px;
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  border: 0;
+}
+.nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 999px;
+  background: rgba(9, 9, 11, .91);
+  box-shadow: 0 8px 30px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.025);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: gap .35s ease, padding .35s ease, box-shadow .25s ease;
+}
+.nav-pill:hover { border-color: rgba(255,255,255,.22); }
+.nav-orbit {
+  display: grid;
+  place-items: center;
+  flex: 0 0 31px;
+  width: 31px;
+  height: 31px;
+  padding: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #f5f5f5;
+  transition: transform .35s ease, background .2s ease;
+}
+.nav-orbit svg { width: 24px; height: 24px; }
+.nav-orbit:hover { background: rgba(255,255,255,.1); transform: rotate(-16deg); }
+.nav-pill-links {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 390px;
+  opacity: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width .4s cubic-bezier(.22,1,.36,1), opacity .25s ease;
+}
+.nav-pill--collapsed { gap: 0; padding-inline: 9px; }
+.nav-pill--collapsed .nav-pill-links { max-width: 0; opacity: 0; pointer-events: none; }
+.nav-pill-link {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #a1a1aa;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background .2s ease, color .2s ease;
+}
+.nav-pill-link:hover, .nav-pill-link.is-active { background: rgba(255,255,255,.075); color: #fff; }
+.nav-count { color: #fa6674; font-size: 12px; font-weight: 700; margin-left: 2px; }
+.nav-orbit:focus-visible, .nav-pill-link:focus-visible { outline: 2px solid #fb6675; outline-offset: 2px; }
+#movies { scroll-margin-top: 24px; }
+@media (max-width: 600px) {
+  .navbar { min-height: 78px; padding: 15px 10px 8px; }
+  .nav-pill { min-height: 46px; gap: 5px; padding: 4px 8px; }
+  .nav-orbit { flex-basis: 29px; width: 29px; height: 29px; }
+  .nav-pill-link { padding: 9px 9px; font-size: 12px; }
+  .nav-pill-links { max-width: 300px; }
+  .nav-pill--collapsed { gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-pill, .nav-pill-links, .nav-orbit, .nav-pill-link { transition: none; }
+}
+
+/* Left-aligned MovieExplorer brand; navigation remains centered. */
+.navbar { position: relative; }
+.brand-logo {
+  position: absolute;
+  top: 25px;
+  left: max(24px, calc((100vw - 1160px) / 2));
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.7px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity .2s ease;
+}
+.brand-logo:hover { opacity: .85; }
+.brand-logo:focus-visible { outline: 2px solid #f43f5e; outline-offset: 5px; border-radius: 4px; }
+.brand-name strong { color: #f43f5e; }
+.brand-icon { display: inline-flex; color: #f43f5e; width: 27px; height: 27px; }
+.brand-icon svg { display: block; width: 100%; height: 100%; }
+@media (max-width: 780px) {
+  .navbar { justify-content: space-between; gap: 12px; }
+  .brand-logo { position: static; min-height: 46px; font-size: 16px; gap: 5px; }
+  .brand-icon { width: 22px; height: 22px; }
+  .nav-pill { margin-left: auto; }
+}
+@media (max-width: 390px) {
+  .brand-logo { font-size: 14px; }
+  .brand-icon { width: 19px; height: 19px; }
+  .nav-pill-link { padding-inline: 6px; font-size: 11px; }
+}
