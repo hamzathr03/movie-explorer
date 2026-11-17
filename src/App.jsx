@@ -76,6 +76,7 @@ function App() {
   const [gridLoading, setGridLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [genres, setGenres] = useState([]);
+  const [genreMap, setGenreMap] = useState({});
   const [selectedGenre, setSelectedGenre] = useState("");
   const [sortBy, setSortBy] = useState("popularity.desc");
   const [searchText, setSearchText] = useState("");
@@ -90,6 +91,10 @@ function App() {
   const [episodes, setEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
 
+  // Person modal (Pack 2)
+  const [person, setPerson] = useState(null);
+  const [personLoading, setPersonLoading] = useState(false);
+
   // Trailer modal
   const [trailerKey, setTrailerKey] = useState(null);
   const [trailerTitle, setTrailerTitle] = useState("");
@@ -101,6 +106,35 @@ function App() {
   useEffect(() => {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
   }, [favorites]);
+
+  // Pack 2: global genre map (movies + series) to label the cards
+  useEffect(() => {
+    (async () => {
+      try {
+        const [movieGenres, tvGenres] = await Promise.all([
+          apiRequest(`${API}/genre/movie/list?language=en`),
+          apiRequest(`${API}/genre/tv/list?language=en`),
+        ]);
+        const map = {};
+        [...(movieGenres.genres || []), ...(tvGenres.genres || [])].forEach(
+          (genre) => {
+            map[genre.id] = genre.name;
+          }
+        );
+        setGenreMap(map);
+      } catch {
+        // Cards simply show no genre line without the map.
+      }
+    })();
+  }, []);
+
+  function genresText(item) {
+    return (item.genre_ids || [])
+      .map((id) => genreMap[id])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(" · ");
+  }
 
   const isFavorite = useCallback(
     (item) => favorites.some((fav) => favKey(fav) === favKey(item)),
@@ -235,7 +269,7 @@ function App() {
     setEpisodes([]);
     try {
       const data = await apiRequest(
-        `${API}/${type}/${item.id}?language=en-US&append_to_response=credits,videos`
+        `${API}/${type}/${item.id}?language=en-US&append_to_response=credits,videos,recommendations,watch/providers`
       );
       setSelected({ ...data, media_type: type });
       if (type === "tv" && data.seasons?.length) {
@@ -269,6 +303,27 @@ function App() {
     setDetailsLoading(false);
     setEpisodes([]);
     setSeasonNumber(null);
+  }
+
+  /* ---------------- Person (Pack 2) ---------------- */
+  async function openPerson(personId) {
+    setPerson(null);
+    setPersonLoading(true);
+    try {
+      const data = await apiRequest(
+        `${API}/person/${personId}?language=en-US&append_to_response=combined_credits`
+      );
+      setPerson(data);
+    } catch {
+      setPerson(null);
+    } finally {
+      setPersonLoading(false);
+    }
+  }
+
+  function closePerson() {
+    setPerson(null);
+    setPersonLoading(false);
   }
 
   async function openTrailer(item) {
@@ -431,6 +486,7 @@ function App() {
                     <Card
                       key={favKey(item)}
                       item={item}
+                      genresText={genresText(item)}
                       isFavorite={isFavorite(item)}
                       onToggleFavorite={toggleFavorite}
                       onDetails={openDetails}
@@ -494,6 +550,7 @@ function App() {
                 <Card
                   key={favKey(item)}
                   item={item}
+                  genresText={genresText(item)}
                   isFavorite={isFavorite(item)}
                   onToggleFavorite={toggleFavorite}
                   onDetails={openDetails}
@@ -528,6 +585,7 @@ function App() {
               <Card
                 key={favKey(item)}
                 item={item}
+                genresText={genresText(item)}
                 isFavorite
                 onToggleFavorite={toggleFavorite}
                 onDetails={openDetails}
@@ -578,12 +636,30 @@ function App() {
                       {isFavorite(selected) ? "♥ Remove favorite" : "♡ Add to favorites"}
                     </button>
                   </div>
+                  <WatchProviders details={selected} />
                   {selected.credits?.cast?.length > 0 && (
                     <>
-                      <h3>Cast</h3>
-                      <p className="cast-list">
-                        {selected.credits.cast.slice(0, 8).map((actor) => actor.name).join(", ")}
-                      </p>
+                      <h3>Cast — tap an actor</h3>
+                      <div className="cast-grid">
+                        {selected.credits.cast.slice(0, 8).map((actor) => (
+                          <button
+                            key={actor.id}
+                            type="button"
+                            className="cast-card"
+                            onClick={() => openPerson(actor.id)}
+                          >
+                            {actor.profile_path ? (
+                              <img src={`${IMG}/w185${actor.profile_path}`} alt={actor.name} loading="lazy" />
+                            ) : (
+                              <span className="cast-placeholder">{actor.name.slice(0, 1)}</span>
+                            )}
+                            <span className="cast-name">{actor.name}</span>
+                            {actor.character ? (
+                              <span className="cast-character">{actor.character}</span>
+                            ) : null}
+                          </button>
+                        ))}
+                      </div>
                     </>
                   )}
                   {selected.media_type === "tv" && selected.seasons?.length > 0 && (
@@ -616,6 +692,105 @@ function App() {
                         </ul>
                       )}
                     </div>
+                  )}
+                  {selected.recommendations?.results?.length > 0 && (
+                    <div className="similar">
+                      <h3>You may also like</h3>
+                      <div className="similar-grid">
+                        {selected.recommendations.results
+                          .filter((item) => item.poster_path)
+                          .slice(0, 8)
+                          .map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className="similar-card"
+                              onClick={() =>
+                                openDetails({ ...item, media_type: selected.media_type })
+                              }
+                            >
+                              <img
+                                src={`${IMG}/w342${item.poster_path}`}
+                                alt={`${itemTitle(item)} poster`}
+                                loading="lazy"
+                              />
+                              <span>{itemTitle(item)}</span>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {(personLoading || person) && (
+        <div className="modal-backdrop person-backdrop" onClick={closePerson}>
+          <div className="trailer-modal person-modal" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-close" onClick={closePerson} aria-label="Close actor">
+              ×
+            </button>
+            {personLoading && <p className="status-text">Loading actor...</p>}
+            {person && (
+              <div className="person-content">
+                {person.profile_path ? (
+                  <img src={`${IMG}/w342${person.profile_path}`} alt={person.name} />
+                ) : (
+                  <div className="poster-placeholder">No photo</div>
+                )}
+                <div>
+                  <h2>{person.name}</h2>
+                  <p className="modal-meta">
+                    {person.birthday ? `Born ${person.birthday}` : ""}
+                    {person.place_of_birth ? ` · ${person.place_of_birth}` : ""}
+                  </p>
+                  <p>
+                    {person.biography
+                      ? person.biography.slice(0, 420) + (person.biography.length > 420 ? "…" : "")
+                      : "No biography available."}
+                  </p>
+                  {person.combined_credits?.cast?.length > 0 && (
+                    <>
+                      <h3>Known for</h3>
+                      <div className="similar-grid">
+                        {[...person.combined_credits.cast]
+                          .filter(
+                            (item) =>
+                              (item.media_type === "movie" || item.media_type === "tv") &&
+                              item.poster_path
+                          )
+                          .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+                          .filter(
+                            (item, index, arr) =>
+                              arr.findIndex(
+                                (other) =>
+                                  other.id === item.id && other.media_type === item.media_type
+                              ) === index
+                          )
+                          .slice(0, 8)
+                          .map((item) => (
+                            <button
+                              key={`${item.media_type}-${item.id}`}
+                              type="button"
+                              className="similar-card"
+                              onClick={() => {
+                                closePerson();
+                                openDetails(item);
+                              }}
+                            >
+                              <img
+                                src={`${IMG}/w342${item.poster_path}`}
+                                alt={`${itemTitle(item)} poster`}
+                                loading="lazy"
+                              />
+                              <span>{itemTitle(item)}</span>
+                            </button>
+                          ))}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -650,7 +825,48 @@ function App() {
   );
 }
 
-function Card({ item, isFavorite, onToggleFavorite, onDetails, onTrailer }) {
+function WatchProviders({ details }) {
+  const allRegions = details?.["watch/providers"]?.results || {};
+  const region = allRegions.MA ? "MA" : allRegions.US ? "US" : null;
+  const data = region ? allRegions[region] : null;
+  const streaming = data?.flatrate || [];
+  const rent = data?.rent || [];
+  const buy = data?.buy || [];
+  if (!region || (streaming.length === 0 && rent.length === 0 && buy.length === 0)) {
+    return (
+      <div className="providers">
+        <h3>Where to watch</h3>
+        <p className="status-text">No streaming info available for Morocco yet.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="providers">
+      <h3>Where to watch {region === "MA" ? "🇲🇦" : "(US)"}</h3>
+      {streaming.length > 0 && (
+        <div className="provider-row">
+          {streaming.map((provider) => (
+            <span key={provider.provider_id} className="provider-chip" title={provider.provider_name}>
+              {provider.logo_path ? (
+                <img src={`${IMG}/w92${provider.logo_path}`} alt={provider.provider_name} />
+              ) : null}
+              {provider.provider_name}
+            </span>
+          ))}
+        </div>
+      )}
+      {rent.length > 0 && (
+        <p className="provider-alt">Rent: {rent.map((p) => p.provider_name).join(", ")}</p>
+      )}
+      {buy.length > 0 && (
+        <p className="provider-alt">Buy: {buy.map((p) => p.provider_name).join(", ")}</p>
+      )}
+      <p className="provider-credit">Availability via JustWatch / TMDB</p>
+    </div>
+  );
+}
+
+function Card({ item, genresText, isFavorite, onToggleFavorite, onDetails, onTrailer }) {
   return (
     <article className="movie-card">
       {item.poster_path ? (
@@ -664,6 +880,7 @@ function Card({ item, isFavorite, onToggleFavorite, onDetails, onTrailer }) {
         <p>
           ★ {Number(item.vote_average || 0).toFixed(1)} · {itemYear(item)}
         </p>
+        {genresText ? <p className="card-genres">{genresText}</p> : null}
         <button type="button" onClick={() => onTrailer(item)}>
           ▶ Trailer
         </button>
